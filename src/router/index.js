@@ -1,23 +1,47 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import HomeView from "../views/HomeView.vue";
 
 Vue.use(VueRouter);
 
 const routes = [
   {
     path: "/",
-    name: "home",
-    component: HomeView,
+    redirect: "/screen",
   },
   {
-    path: "/about",
-    name: "about",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () =>
-      import(/* webpackChunkName: "about" */ "../views/AboutView.vue"),
+    path: "/screen",
+    name: "Screen",
+    component: () => import("@/views/ScreenPage.vue"),
+  },
+  {
+    path: "/seller",
+    name: "Seller",
+    component: () => import("@/views/sellerPage/index.vue"),
+  },
+  {
+    path: "/trend",
+    name: "Trend",
+    component: () => import("@/views/trendPage/index.vue"),
+  },
+  {
+    path: "/hot",
+    name: "Hot",
+    component: () => import("@/views/hotPage/index.vue"),
+  },
+  {
+    path: "/map",
+    name: "Map",
+    component: () => import("@/views/mapPage/index.vue"),
+  },
+  {
+    path: "/rank",
+    name: "Rank",
+    component: () => import("@/views/rankPage/index.vue"),
+  },
+  {
+    path: "/stock",
+    name: "Stock",
+    component: () => import("@/views/stockPage/index.vue"),
   },
 ];
 
