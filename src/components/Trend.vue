@@ -8,48 +8,67 @@
  * 6. 图表自适应
  */
 import { getTrendList } from "@/api";
-
 export default {
   name: "Trend",
   data() {
     return {
       chartInstance: null,
       allData: null,
+      choiceType: "map",
+      titleFontSize: 0,
+      showChoice: false,
     };
   },
   created() {
     this.getData();
   },
   mounted() {
+    this.initChartInstance();
     this.initChart();
     window.addEventListener("resize", this.screenAdapter);
     this.screenAdapter();
   },
+  destroyed() {
+    window.removeEventListener("resize", this.screenAdapter);
+  },
+  computed: {
+    selectTypes() {
+      if (!this.allData) {
+        return [];
+      } else {
+        return this.allData.type.filter((item) => {
+          return item.key !== this.choiceType;
+        });
+      }
+    },
+    showTitle() {
+      if (!this.allData) {
+        return "";
+      } else {
+        return this.allData[this.choiceType].title;
+      }
+    },
+    marginStyle() {
+      return {
+        marginLeft: this.titleFontSize + "px",
+      };
+    },
+  },
   methods: {
+    initChartInstance() {
+      this.chartInstance = this.$echarts.init(this.$refs.trend_ref);
+    },
     // 初始化图表
     initChart() {
-      this.chartInstance = this.$echarts.init(this.$refs.trend_ref);
       const option = {
         backgroundColor: "#222733",
         tooltip: {
           trigger: "axis",
-          axisPointer: {
-            type: "cross",
-            label: {
-              backgroundColor: "#6a7985",
-            },
-          },
         },
         legend: {
-          data: ["Email", "Union Ads", "Video Ads", "Direct", "Search Engine"],
           top: "15%",
           left: 20,
           icon: "circle",
-        },
-        toolbox: {
-          feature: {
-            saveAsImage: {},
-          },
         },
         grid: {
           top: "35%",
@@ -60,78 +79,53 @@ export default {
         },
         xAxis: [
           {
+            axisTick: {
+              show: false,
+            },
+            axisLabel: {
+              color: "#fff",
+            },
             type: "category",
             boundaryGap: false,
-            data: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
           },
         ],
         yAxis: [
           {
+            axisLine: {
+              show: true,
+            },
+            axisLabel: {
+              color: "#fff",
+            },
+            axisTick: {
+              show: false,
+            },
+            splitLine: { show: false },
             type: "value",
           },
         ],
-        series: [
-          {
-            name: "Email",
-            type: "line",
-            stack: "Total",
-            areaStyle: {},
-            emphasis: {
-              focus: "series",
-            },
-            data: [120, 132, 101, 134, 90, 230, 210],
-          },
-          {
-            name: "Union Ads",
-            type: "line",
-            stack: "Total",
-            areaStyle: {},
-            emphasis: {
-              focus: "series",
-            },
-            data: [220, 182, 191, 234, 290, 330, 310],
-          },
-          {
-            name: "Video Ads",
-            type: "line",
-            stack: "Total",
-            areaStyle: {},
-            emphasis: {
-              focus: "series",
-            },
-            data: [150, 232, 201, 154, 190, 330, 410],
-          },
-          {
-            name: "Direct",
-            type: "line",
-            stack: "Total",
-            areaStyle: {},
-            emphasis: {
-              focus: "series",
-            },
-            data: [320, 332, 301, 334, 390, 330, 320],
-          },
-          {
-            name: "Search Engine",
-            type: "line",
-            stack: "Total",
-            label: {
-              show: true,
-              position: "top",
-            },
-            areaStyle: {},
-            emphasis: {
-              focus: "series",
-            },
-            data: [820, 932, 901, 934, 1290, 1330, 1320],
-          },
-        ],
       };
+
       this.chartInstance.setOption(option);
     },
 
     // 图表自适应方法
     screenAdapter() {
+      this.titleFontSize = (this.$refs.trend_ref.clientWidth / 100) * 3.6;
+
+      const adapterOption = {
+        legend: {
+          itemWidth: this.titleFontSize,
+          itemHeight: this.titleFontSize,
+          itemGap: this.titleFontSize,
+          textStyle: {
+            fontSize: this.titleFontSize / 2,
+          },
+        },
+      };
+
+      this.chartInstance.setOption(adapterOption);
+
       this.chartInstance.resize();
     },
 
@@ -139,11 +133,90 @@ export default {
     async getData() {
       try {
         const res = await getTrendList();
-        console.log("Res=>", res);
+
         this.allData = res.data;
+        console.log("this.allData", this.allData);
+
+        this.updateChart();
       } catch (e) {
         console.log(e);
       }
+    },
+
+    // 下啦选项切换
+    handleSelect(key) {
+      this.choiceType = key;
+      this.showChoice = false;
+      this.updateChart();
+    },
+
+    // 更新图表的方法
+    updateChart() {
+      // x轴的数据
+      const timeArr = this.allData.common.month;
+
+      // y轴的数据
+      const valueArr = this.allData[this.choiceType].data;
+
+      // 半透明的颜色值
+      const colorArr1 = [
+        "rgba(11, 168, 44, 0.5)",
+        "rgba(44, 110, 255, 0.5)",
+        "rgba(22, 242, 217, 0.5)",
+        "rgba(254, 33, 30, 0.5)",
+        "rgba(250, 105, 0, 0.5)",
+      ];
+      // 全透明的颜色值
+      const colorArr2 = [
+        "rgba(11, 168, 44, 0)",
+        "rgba(44, 110, 255, 0)",
+        "rgba(22, 242, 217, 0)",
+        "rgba(254, 33, 30, 0)",
+        "rgba(250, 105, 0, 0)",
+      ];
+
+      const legendArr = valueArr.map((item) => item.name);
+
+      const seriesArr = valueArr.map((item, index) => {
+        return {
+          name: item.name,
+          type: "line",
+          areaStyle: {
+            color: new this.$echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              {
+                offset: 0,
+                color: colorArr1[index],
+              },
+              {
+                offset: 1,
+                color: colorArr2[index],
+              },
+            ]),
+          },
+          stack: this.choiceType,
+          showSymbol: false,
+          emphasis: {
+            focus: "series",
+          },
+          data: item.data,
+          smooth: true,
+        };
+      });
+
+      const option = {
+        xAxis: {
+          data: timeArr,
+        },
+        legend: {
+          data: legendArr,
+          textStyle: {
+            color: "#fff",
+          },
+        },
+        series: seriesArr,
+      };
+
+      this.chartInstance.setOption(option);
     },
   },
 };
@@ -152,8 +225,21 @@ export default {
 <template>
   <div class="container">
     <div class="title">
-      <span>{{ "▎ " + "地区销量趋势" }}</span>
-      <span class="iconfont icon-arrow-down"></span>
+      <span>{{ "▎ " + showTitle }}</span>
+      <span
+        class="iconfont icon-arrow-down"
+        @click="showChoice = !showChoice"
+      ></span>
+      <div v-if="showChoice" class="select-con">
+        <div
+          v-for="(item, index) in selectTypes"
+          :key="index"
+          class="select-item"
+          @click="handleSelect(item.key)"
+        >
+          {{ item.text }}
+        </div>
+      </div>
     </div>
     <div ref="trend_ref" class="chart"></div>
   </div>
@@ -164,7 +250,7 @@ export default {
 //  background: #0077aa;
 //}
 .title {
-  color: #f60;
+  color: #fff;
   font-size: 0.3646rem;
   position: absolute;
   left: 0.1042rem;
@@ -176,5 +262,9 @@ export default {
   margin-left: 0.0521rem;
   font-size: 0.3646rem;
   cursor: pointer;
+}
+.select-con {
+  background: #222733;
+  margin-left: 0.4583rem;
 }
 </style>
