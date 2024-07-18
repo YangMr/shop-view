@@ -1,6 +1,5 @@
 <script>
 import { getHotList } from "@/api";
-import { color } from "echarts/lib/export";
 
 export default {
   name: "Hot",
@@ -25,6 +24,9 @@ export default {
     window.removeEventListener("resize", this.screenAdapter);
   },
   computed: {
+    titleSize() {
+      return this.titleFontSize + "px";
+    },
     catName() {
       if (!this.allData) {
         return "";
@@ -62,7 +64,6 @@ export default {
         tooltip: {
           show: true,
           formatter: (arg) => {
-            // console.log("arg", arg);
             const children = arg.data.children;
             let total = 0;
             children.forEach((item) => {
@@ -71,7 +72,6 @@ export default {
             let str = "";
 
             children.forEach((item) => {
-              console.log("item", item);
               str += `${item.name}: ${parseInt(
                 ((item.value / total) * 100).toString()
               )}% <br/>`;
@@ -186,7 +186,9 @@ export default {
     <div ref="hot_ref" class="chart"></div>
     <span class="iconfont left icon-arrow-lift" @click="handleLeft"></span>
     <span class="iconfont right icon-arrow-right" @click="handleRight"></span>
-    <div class="cat-name">{{ catName }}</div>
+    <div :style="{ fontSize: this.titleSize }" class="cat-name">
+      {{ catName }}
+    </div>
   </div>
 </template>
 
@@ -216,7 +218,7 @@ export default {
   position: absolute;
   right: 5%;
   bottom: 20px;
-  font-size: 0.3125rem;
+  //font-size: 0.3125rem;
   color: #fff;
 }
 </style>

@@ -185,9 +185,11 @@ export default {
             fontSize: this.titleFontSize,
           },
         },
-        axisPointer: {
-          lineStyle: {
-            width: this.titleFontSize,
+        tooltip: {
+          axisPointer: {
+            lineStyle: {
+              width: this.titleFontSize,
+            },
           },
         },
 

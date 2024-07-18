@@ -7,7 +7,10 @@
  * 5. 渲染配置项数据
  * 6. 图表自适应
  */
+
 import { getTrendList } from "@/api";
+import { mapState } from "vuex";
+
 export default {
   name: "Trend",
   data() {
@@ -32,6 +35,10 @@ export default {
     window.removeEventListener("resize", this.screenAdapter);
   },
   computed: {
+    ...mapState(["theme"]),
+    // theme() {
+    //   // return this.$store.state.theme;
+    // },
     selectTypes() {
       if (!this.allData) {
         return [];
@@ -48,6 +55,9 @@ export default {
         return this.allData[this.choiceType].title;
       }
     },
+    titleSize() {
+      return this.titleFontSize + "px";
+    },
     marginStyle() {
       return {
         marginLeft: this.titleFontSize + "px",
@@ -56,7 +66,7 @@ export default {
   },
   methods: {
     initChartInstance() {
-      this.chartInstance = this.$echarts.init(this.$refs.trend_ref);
+      this.chartInstance = this.$echarts.init(this.$refs.trend_ref, this.theme);
     },
     // 初始化图表
     initChart() {
@@ -219,18 +229,28 @@ export default {
       this.chartInstance.setOption(option);
     },
   },
+  watch: {
+    theme() {
+      this.chartInstance.dispose();
+      this.initChartInstance();
+      this.initChart();
+      this.screenAdapter();
+      this.updateChart();
+    },
+  },
 };
 </script>
 
 <template>
   <div class="container">
-    <div class="title">
+    <div :style="{ fontSize: titleSize }" class="title">
       <span>{{ "▎ " + showTitle }}</span>
       <span
+        :style="{ fontSize: titleSize }"
         class="iconfont icon-arrow-down"
         @click="showChoice = !showChoice"
       ></span>
-      <div v-if="showChoice" class="select-con">
+      <div v-if="showChoice" :style="marginStyle" class="select-con">
         <div
           v-for="(item, index) in selectTypes"
           :key="index"
@@ -251,7 +271,7 @@ export default {
 //}
 .title {
   color: #fff;
-  font-size: 0.3646rem;
+  //font-size: 0.3646rem;
   position: absolute;
   left: 0.1042rem;
   top: 0.1042rem;
@@ -265,6 +285,6 @@ export default {
 }
 .select-con {
   background: #222733;
-  margin-left: 0.4583rem;
+  //margin-left: 0.4583rem;
 }
 </style>

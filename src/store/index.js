@@ -4,9 +4,20 @@ import Vuex from "vuex";
 Vue.use(Vuex);
 
 export default new Vuex.Store({
-  state: {},
+  state: {
+    theme: "chalk",
+  },
   getters: {},
-  mutations: {},
+  mutations: {
+    changeTheme(state) {
+      if (state.theme === "chalk") {
+        state.theme = "vintage";
+      } else {
+        state.theme = "chalk";
+      }
+      console.log("theme", state.theme);
+    },
+  },
   actions: {},
   modules: {},
 });
