@@ -23,19 +23,28 @@ export default {
     };
   },
   created() {
-    this.getData();
+    // this.getData();
+    this.$socket.registerCallBack("trendData", this.getData);
+    console.log("aaa", this.$connected);
   },
   mounted() {
     this.initChartInstance();
     this.initChart();
+    this.$socket.send({
+      action: "getData",
+      socketType: "trendData",
+      chartName: "trend",
+      value: "",
+    });
     window.addEventListener("resize", this.screenAdapter);
     this.screenAdapter();
   },
   destroyed() {
     window.removeEventListener("resize", this.screenAdapter);
+    this.$socket.unregisterCallBack("trendData");
   },
   computed: {
-    ...mapState(["theme"]),
+    ...mapState(["theme", "socket_connected"]),
     // theme() {
     //   // return this.$store.state.theme;
     // },
@@ -140,11 +149,11 @@ export default {
     },
 
     // 初始化数据方法
-    async getData() {
+    async getData(res) {
       try {
-        const res = await getTrendList();
+        // const res = await getTrendList();
 
-        this.allData = res.data;
+        this.allData = res;
         console.log("this.allData", this.allData);
 
         this.updateChart();
@@ -230,12 +239,15 @@ export default {
     },
   },
   watch: {
-    theme() {
-      this.chartInstance.dispose();
-      this.initChartInstance();
-      this.initChart();
-      this.screenAdapter();
-      this.updateChart();
+    socket_connected(value) {
+      if (value) {
+        this.$socket.send({
+          action: "getData",
+          socketType: "trendData",
+          chartName: "trend",
+          value: "",
+        });
+      }
     },
   },
 };

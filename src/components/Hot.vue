@@ -1,5 +1,6 @@
 <script>
 import { getHotList } from "@/api";
+import { mapState } from "vuex";
 
 export default {
   name: "Hot",
@@ -11,19 +12,41 @@ export default {
       titleFontSize: 0,
     };
   },
+
+  watch: {
+    socket_connected(value) {
+      if (value) {
+        this.$socket.send({
+          action: "getData",
+          socketType: "trendData",
+          chartName: "trend",
+          value: "",
+        });
+      }
+    },
+  },
   created() {
-    this.getData();
+    // this.getData();
+    this.$socket.registerCallBack("hotData", this.getData);
   },
   mounted() {
     this.initChartInstance();
     this.initChart();
+    this.$socket.send({
+      action: "getData",
+      socketType: "hotData",
+      chartName: "hot",
+      value: "",
+    });
     window.addEventListener("resize", this.screenAdapter);
     this.screenAdapter();
   },
   destroyed() {
     window.removeEventListener("resize", this.screenAdapter);
+    this.$socket.unregisterCallBack("hotData");
   },
   computed: {
+    ...mapState["socket_connected"],
     titleSize() {
       return this.titleFontSize + "px";
     },
@@ -36,10 +59,10 @@ export default {
     },
   },
   methods: {
-    async getData() {
+    async getData(res) {
       try {
-        const res = await getHotList();
-        this.allData = res.data;
+        // const res = await getHotList();
+        this.allData = res;
 
         console.log(" this.allData ", this.allData);
         this.updateChart();

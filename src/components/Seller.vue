@@ -1,5 +1,6 @@
 <script>
 import { getSellerList } from "@/api";
+import { mapState } from "vuex";
 export default {
   name: "Seller",
   data() {
@@ -12,18 +13,43 @@ export default {
       titleFontSize: 0,
     };
   },
+  computed: {
+    ...mapState["socket_connected"],
+  },
+  watch: {
+    socket_connected(value) {
+      if (value) {
+        this.$socket.send({
+          action: "getData",
+          socketType: "trendData",
+          chartName: "trend",
+          value: "",
+        });
+      }
+    },
+  },
   created() {
-    this.getData();
+    // this.getData();
+    // 接受数据
+    this.$socket.registerCallBack("sellerData", this.getData);
   },
   mounted() {
     this.initChartInstance();
     this.initChart();
+    // 通过为websocket发送请求
+    this.$socket.send({
+      action: "getData",
+      socketType: "sellerData",
+      chartName: "seller",
+      value: "",
+    });
     window.addEventListener("resize", this.screenAdapter);
     this.screenAdapter();
   },
   destroyed() {
     window.removeEventListener("resize", this.screenAdapter);
     clearInterval(this.timer);
+    this.$socket.unregisterCallBack("sellerData");
   },
   methods: {
     initChartInstance() {
@@ -154,11 +180,11 @@ export default {
 
       this.echartsInstance.setOption(option);
     },
-    async getData() {
+    async getData(res) {
       try {
-        const res = await getSellerList();
+        // const res = await getSellerList();
 
-        this.allData = res.data;
+        this.allData = res;
 
         this.allData.sort((a, b) => {
           return a.value - b.value; // 从大到小排序

@@ -2,6 +2,7 @@
 import { getMapList } from "@/api";
 import axios from "axios";
 import { getProvinceMapInfo } from "@/utils/map_utils";
+import { mapState } from "vuex";
 
 export default {
   name: "Map",
@@ -13,22 +14,46 @@ export default {
     };
   },
   created() {
-    this.getData();
+    // this.getData();
+    this.$socket.registerCallBack("mapData", this.getData);
+  },
+  computed: {
+    ...mapState["socket_connected"],
+  },
+  watch: {
+    socket_connected(value) {
+      if (value) {
+        this.$socket.send({
+          action: "getData",
+          socketType: "trendData",
+          chartName: "trend",
+          value: "",
+        });
+      }
+    },
   },
   mounted() {
     this.initChartInstance();
     this.initChart();
+    // 通过websocket发送请求
+    this.$socket.send({
+      action: "getData",
+      socketType: "mapData",
+      chartName: "map",
+      value: "",
+    });
     window.addEventListener("resize", this.screenAdapter);
     this.screenAdapter();
   },
   destroyed() {
     window.removeEventListener("resize", this.screenAdapter);
+    this.$socket.unregisterCallBack("mapData");
   },
   methods: {
-    async getData() {
+    async getData(res) {
       try {
-        const res = await getMapList();
-        this.allData = res.data;
+        // const res = await getMapList();
+        this.allData = res;
         console.log("this.allData ", this.allData);
         this.updateChart();
       } catch (e) {

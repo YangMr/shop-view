@@ -1,5 +1,6 @@
 <script>
 import { getStockList } from "@/api";
+import { mapState } from "vuex";
 
 export default {
   name: "Stock",
@@ -13,24 +14,47 @@ export default {
       totalPage: 0,
     };
   },
+  computed: {
+    ...mapState["socket_connected"],
+  },
+  watch: {
+    socket_connected(value) {
+      if (value) {
+        this.$socket.send({
+          action: "getData",
+          socketType: "trendData",
+          chartName: "trend",
+          value: "",
+        });
+      }
+    },
+  },
   created() {
-    this.getData();
+    // this.getData();
+    this.$socket.registerCallBack("stockData", this.getData);
   },
   mounted() {
     this.initChartInstance();
     this.initChart();
+    this.$socket.send({
+      action: "getData",
+      socketType: "stockData",
+      chartName: "stock",
+      value: "",
+    });
     window.addEventListener("resize", this.screenAdapter);
     this.screenAdapter();
   },
   destroyed() {
     window.removeEventListener("resize", this.screenAdapter);
     clearInterval(this.timer);
+    this.$socket.unregisterCallBack("stockData");
   },
   methods: {
-    async getData() {
+    async getData(res) {
       try {
-        const res = await getStockList();
-        this.allData = res.data;
+        // const res = await getStockList();
+        this.allData = res;
 
         this.totalPage =
           this.allData.length % 5 === 0

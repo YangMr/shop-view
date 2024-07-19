@@ -1,5 +1,6 @@
 <script>
 import { getRankList } from "@/api";
+import { mapState } from "vuex";
 
 export default {
   name: "Rank",
@@ -14,25 +15,49 @@ export default {
     };
   },
   created() {
-    this.getData();
+    // this.getData();
+    this.$socket.registerCallBack("rankData", this.getData);
+  },
+  computed: {
+    ...mapState["socket_connected"],
+  },
+  watch: {
+    socket_connected(value) {
+      if (value) {
+        this.$socket.send({
+          action: "getData",
+          socketType: "trendData",
+          chartName: "trend",
+          value: "",
+        });
+      }
+    },
   },
   mounted() {
     this.initChartInstance();
     this.initChart();
+    // 通过websocket发送请求
+    this.$socket.send({
+      action: "getData",
+      socketType: "rankData",
+      chartName: "rank",
+      value: "",
+    });
     window.addEventListener("resize", this.screenAdapter);
     this.screenAdapter();
   },
   destroyed() {
     window.removeEventListener("resize", this.screenAdapter);
     clearInterval(this.timer);
+    this.$socket.unregisterCallBack("rankData");
   },
   methods: {
     // 初始化数据
-    async getData() {
+    async getData(res) {
       try {
-        const res = await getRankList();
+        // const res = await getRankList();
 
-        this.allData = res.data;
+        this.allData = res;
 
         this.allData.sort((a, b) => b.value - a.value);
 
